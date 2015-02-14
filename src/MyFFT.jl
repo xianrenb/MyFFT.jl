@@ -10,10 +10,11 @@ function myfft(x::AbstractArray{Complex{Float64}, 1})
     end
 
     r = 1:n
-    myfftTask(x, r, n)
+    twiddleBasis = e^(-2.0 * pi * im / n)
+    myfftTask(x, r, n, twiddleBasis)
 end
 
-function myfftTask(x::AbstractArray{Complex{Float64}, 1}, r::Range, n::Integer)
+function myfftTask(x::AbstractArray{Complex{Float64}, 1}, r::Range, n::Integer, twiddleBasis::Complex{Float64})
     if n == 1
         return
     else
@@ -28,11 +29,11 @@ function myfftTask(x::AbstractArray{Complex{Float64}, 1}, r::Range, n::Integer)
         x[rangeOdd] = xOdd
 
         # call sub-tasks
-        myfftTask(x, rangeEven, nHalf)
-        myfftTask(x, rangeOdd, nHalf)
+        subTwiddleBasis = twiddleBasis * twiddleBasis
+        myfftTask(x, rangeEven, nHalf, subTwiddleBasis)
+        myfftTask(x, rangeOdd, nHalf, subTwiddleBasis)
 
         # core calculation
-        twiddleBasis = e^(-2.0 * pi * im / n)
         twiddle = twiddleBasis
         i = r.start
         j = i + nHalf
