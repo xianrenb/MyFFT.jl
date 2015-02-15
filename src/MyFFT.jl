@@ -16,43 +16,40 @@ end
 
 function myfftTask(x::AbstractArray{Complex{Float64}, 1}, r::Range, n::Integer, twiddleBasis::Complex{Float64})
     if n == 1
-        return
+        return x[r.start]
     else
         nHalf = n >> 1
 
-        # data reordering
-        xEven = x[(r.start):2:(r.stop-1)]
-        xOdd = x[(r.start+1):2:(r.stop)]
-        rangeEven = (r.start):(r.start+nHalf-1)
-        rangeOdd = (r.start+nHalf):(r.stop)
-        x[rangeEven] = xEven
-        x[rangeOdd] = xOdd
-
         # call sub-tasks
+        s = step(r)
+        sDouble = s << 1
+        rangeEven = (r.start):(sDouble):(r.stop-s)
+        rangeOdd = (r.start+s):(sDouble):(r.stop)
         subTwiddleBasis = twiddleBasis * twiddleBasis
-        myfftTask(x, rangeEven, nHalf, subTwiddleBasis)
-        myfftTask(x, rangeOdd, nHalf, subTwiddleBasis)
+        subEven = myfftTask(x, rangeEven, nHalf, subTwiddleBasis)
+        subOdd = myfftTask(x, rangeOdd, nHalf, subTwiddleBasis)
 
         # core calculation
+        result = zeros(Complex{Float64}, n)
         twiddle = twiddleBasis
-        i = r.start
+        i = 1
         j = i + nHalf
-        xEven = x[i]
-        xOdd = x[j]
-        x[i] = xEven + xOdd
-        x[j] = xEven - xOdd
-        k = 1
+        xEven = subEven[i]
+        xOdd = subOdd[i]
+        result[i] = xEven + xOdd
+        result[j] = xEven - xOdd
 
-        while k < nHalf
+        while i < nHalf
             i = i + 1
             j = j + 1
-            xEven = x[i]
-            xOdd = twiddle * x[j]
-            x[i] = xEven + xOdd
-            x[j] = xEven - xOdd
+            xEven = subEven[i]
+            xOdd = twiddle * subOdd[i]
+            result[i] = xEven + xOdd
+            result[j] = xEven - xOdd
             twiddle = twiddle * twiddleBasis
-            k = k + 1
         end
+
+        result
     end
 end
 
