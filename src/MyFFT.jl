@@ -55,12 +55,7 @@ function myfftTask(x::AbstractArray{Complex{Float64}, 1}, r::Range,
             xOdd = twiddleTable[twiddleIndex] * subOdd[i]
             result[i] = xEven + xOdd
             result[j] = xEven - xOdd
-            twiddleIndex = twiddleIndex + s
-
-            if twiddleIndex > ttsize
-                twiddleIndex = twiddleIndex - ttsize
-            end
-
+            twiddleIndex = ((twiddleIndex + s - 1) % ttsize) + 1
             i = i + 1
             j = j + 1
         end
