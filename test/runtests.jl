@@ -1,29 +1,30 @@
 using MyFFT
 using Base.Test
 
+println("N = 256:")
 v = rand(256) + im * rand(256)
+println("myfft():")
 @time v_myfft = myfft(v)
+println("fft():")
 @time v_fft = fft(v)
 
 for i = 1:256
-    @test_approx_eq_eps(real(v_myfft[i]), real(v_fft[i]), 1e-11)
-    @test_approx_eq_eps(imag(v_myfft[i]), imag(v_fft[i]), 1e-11)
+    @test_approx_eq_eps(real(v_myfft[i]), real(v_fft[i]), 1e-13 * 256 * log2(256))
+    @test_approx_eq_eps(imag(v_myfft[i]), imag(v_fft[i]), 1e-13 * 256 * log2(256))
 end
 
-v = rand(256) + im * rand(256)
-@time v_myfft = myfft(v)
-@time v_fft = fft(v)
+n = [256, 1024, 1048576]
 
-for i = 1:256
-    @test_approx_eq_eps(real(v_myfft[i]), real(v_fft[i]), 1e-11)
-    @test_approx_eq_eps(imag(v_myfft[i]), imag(v_fft[i]), 1e-11)
-end
+for i in n
+    println("N = $(i):")
+    v = rand(i) + im * rand(i)
+    println("myfft():")
+    @time v_myfft = myfft(v)
+    println("fft():")
+    @time v_fft = fft(v)
 
-v = rand(1024) + im * rand(1024)
-@time v_myfft = myfft(v)
-@time v_fft = fft(v)
-
-for i = 1:1024
-    @test_approx_eq_eps(real(v_myfft[i]), real(v_fft[i]), 1e-11)
-    @test_approx_eq_eps(imag(v_myfft[i]), imag(v_fft[i]), 1e-11)
+    for j = 1:i
+        @test_approx_eq_eps(real(v_myfft[j]), real(v_fft[j]), 1e-13 * i * log2(i))
+        @test_approx_eq_eps(imag(v_myfft[j]), imag(v_fft[j]), 1e-13 * i * log2(i))
+    end
 end
