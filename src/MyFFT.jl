@@ -11,53 +11,42 @@ function myfft(x::AbstractArray{Complex{Float64}, 1})
 
     r = 1:n
     twiddleBasis = e^(-2.0 * pi * im / n)
-    twiddleTable = zeros(Complex{Float64}, n)
-    twiddle = twiddleBasis
-
-    for i in r
-        if i > 2
-            twiddle = twiddle * twiddleBasis
-            twiddleTable[i] = twiddle
-        elseif i == 1
-            twiddleTable[i] = 1 + 0.0im
-        else
-            twiddleTable[i] = twiddle
-        end
-    end
-
-    myfftTask(x, r, n, twiddleTable)
+    myfftTask(x, r, n, twiddleBasis)
 end
 
-function myfftTask(x::AbstractArray{Complex{Float64}, 1}, r::Range, 
-    n::Integer, twiddleTable::AbstractArray{Complex{Float64}, 1})
+function myfftTask(x::AbstractArray{Complex{Float64}, 1}, r::Range, n::Integer, twiddleBasis::Complex{Float64})
     if n == 1
         return x[r.start]
     else
         nHalf = n >> 1
-        s = step(r)
 
         # call sub-tasks
+        s = step(r)
         sDouble = s << 1
         rangeEven = (r.start):(sDouble):(r.stop-s)
         rangeOdd = (r.start+s):(sDouble):(r.stop)
-        subEven = myfftTask(x, rangeEven, nHalf, twiddleTable)
-        subOdd = myfftTask(x, rangeOdd, nHalf, twiddleTable)
+        subTwiddleBasis = twiddleBasis * twiddleBasis
+        subEven = myfftTask(x, rangeEven, nHalf, subTwiddleBasis)
+        subOdd = myfftTask(x, rangeOdd, nHalf, subTwiddleBasis)
 
         # core calculation
         result = zeros(Complex{Float64}, n)
-        ttsize = size(twiddleTable)[1]
-        twiddleIndex = 1
+        twiddle = twiddleBasis
         i = 1
         j = i + nHalf
+        xEven = subEven[i]
+        xOdd = subOdd[i]
+        result[i] = xEven + xOdd
+        result[j] = xEven - xOdd
 
-        while i <= nHalf
-            xEven = subEven[i]
-            xOdd = twiddleTable[twiddleIndex] * subOdd[i]
-            result[i] = xEven + xOdd
-            result[j] = xEven - xOdd
-            twiddleIndex = ((twiddleIndex + s - 1) % ttsize) + 1
+        while i < nHalf
             i = i + 1
             j = j + 1
+            xEven = subEven[i]
+            xOdd = twiddle * subOdd[i]
+            result[i] = xEven + xOdd
+            result[j] = xEven - xOdd
+            twiddle = twiddle * twiddleBasis
         end
 
         result
