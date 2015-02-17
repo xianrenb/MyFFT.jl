@@ -1,6 +1,48 @@
 module MyFFT
 
-export myfft
+export myfft, myifft
+
+function _myfftTask!(x::AbstractArray{Complex{Float64}, 1}, r::Range, 
+    result::AbstractArray{Complex{Float64}, 1}, rResult::Range, n::Integer, 
+    twiddleBasis::Complex{Float64})
+    if n == 1
+        result[rResult.start] = x[r.start]
+    else
+        nHalf = n >> 1
+
+        # call sub-tasks
+        s = step(r)
+        sDouble = s << 1
+        rEven = (r.start):(sDouble):(r.stop-s)
+        rOdd = (r.start+s):(sDouble):(r.stop)
+        rrEven = (rResult.start):(rResult.start+nHalf-1)
+        rrOdd = (rResult.start+nHalf):(rResult.stop)
+        subTwiddleBasis = twiddleBasis * twiddleBasis
+        _myfftTask!(x, rEven, result, rrEven, nHalf, subTwiddleBasis)
+        _myfftTask!(x, rOdd, result, rrOdd, nHalf, subTwiddleBasis)
+
+        # core calculation
+        twiddle = twiddleBasis
+        i = rrEven.start
+        j = rrOdd.start
+        xEven = result[i]
+        xOdd = result[j]
+        result[i] = xEven + xOdd
+        result[j] = xEven - xOdd
+
+        while i < rrEven.stop
+            i = i + 1
+            j = j + 1
+            xEven = result[i]
+            xOdd = twiddle * result[j]
+            result[i] = xEven + xOdd
+            result[j] = xEven - xOdd
+            twiddle = twiddle * twiddleBasis
+        end
+
+        result
+    end
+end
 
 function myfft(x::AbstractArray{Complex{Float64}, 1})
     n = size(x)[1]
@@ -11,46 +53,23 @@ function myfft(x::AbstractArray{Complex{Float64}, 1})
 
     r = 1:n
     twiddleBasis = e^(-2.0 * pi * im / n)
-    myfftTask(x, r, n, twiddleBasis)
+    result = Array(Complex{Float64}, n)
+    _myfftTask!(x, r, result, r, n, twiddleBasis)
+    result
 end
 
-function myfftTask(x::AbstractArray{Complex{Float64}, 1}, r::Range, n::Integer, twiddleBasis::Complex{Float64})
-    if n == 1
-        return x[r.start]
-    else
-        nHalf = n >> 1
+function myifft(x::AbstractArray{Complex{Float64}, 1})
+    n = size(x)[1]
 
-        # call sub-tasks
-        s = step(r)
-        sDouble = s << 1
-        rangeEven = (r.start):(sDouble):(r.stop-s)
-        rangeOdd = (r.start+s):(sDouble):(r.stop)
-        subTwiddleBasis = twiddleBasis * twiddleBasis
-        subEven = myfftTask(x, rangeEven, nHalf, subTwiddleBasis)
-        subOdd = myfftTask(x, rangeOdd, nHalf, subTwiddleBasis)
-
-        # core calculation
-        result = zeros(Complex{Float64}, n)
-        twiddle = twiddleBasis
-        i = 1
-        j = i + nHalf
-        xEven = subEven[i]
-        xOdd = subOdd[i]
-        result[i] = xEven + xOdd
-        result[j] = xEven - xOdd
-
-        while i < nHalf
-            i = i + 1
-            j = j + 1
-            xEven = subEven[i]
-            xOdd = twiddle * subOdd[i]
-            result[i] = xEven + xOdd
-            result[j] = xEven - xOdd
-            twiddle = twiddle * twiddleBasis
-        end
-
-        result
+    if (n == 0) || (n & (n-1) != 0)
+        throw(ArgumentError)
     end
+
+    r = 1:n
+    twiddleBasis = e^(2.0 * pi * im / n)
+    result = Array(Complex{Float64}, n)
+    _myfftTask!(x, r, result, r, n, twiddleBasis)
+    result/n
 end
 
 end # module
