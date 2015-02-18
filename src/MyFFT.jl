@@ -85,8 +85,6 @@ function _myfftTask!(x::AbstractArray{Complex{Float64}, 1}, r::Range,
             result[j] = xEven - xOdd
             twiddle = twiddle * twiddleBasis
         end
-
-        result
     end
 end
 
