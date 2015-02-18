@@ -4,6 +4,7 @@ export myfft, myifft
 
 function _myBluestein(x::AbstractArray{Complex{Float64}, 1}, 
     twiddleBasis::Complex{Float64})
+
     n = size(x)[1]
     m = 1
 
@@ -45,12 +46,14 @@ end
 
 function _myconv(a::AbstractArray{Complex{Float64}, 1}, 
     b::AbstractArray{Complex{Float64}, 1})
+
     myifft(myfft(a) .* myfft(b))
 end
 
 function _myfftTask!(x::AbstractArray{Complex{Float64}, 1}, r::Range, 
     result::AbstractArray{Complex{Float64}, 1}, rResult::Range, n::Integer, 
     twiddleBasis::Complex{Float64})
+
     if n == 1
         result[rResult.start] = x[r.start]
     else
@@ -104,6 +107,7 @@ function myfft(x::AbstractArray{Complex{Float64}, 1})
         twiddleBasis = e^(-1.0 * pi * im / n)
         result = _myBluestein(x, twiddleBasis)
     end
+
     result
 end
 
@@ -121,6 +125,7 @@ function myifft(x::AbstractArray{Complex{Float64}, 1})
         twiddleBasis = e^(1.0 * pi * im / n)
         result = _myBluestein(x, twiddleBasis)
     end
+
     result/n
 end
 
