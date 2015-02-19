@@ -1,6 +1,6 @@
 module MyFFT
 
-export myfft, myifft
+export myfft, myifft, myirealfft, myrealfft
 
 function _myBluestein(x::AbstractArray{Complex{Float64}, 1}, 
     twiddleBasis::Complex{Float64})
@@ -127,6 +127,73 @@ function myifft(x::AbstractArray{Complex{Float64}, 1})
     end
 
     result/n
+end
+
+function myirealfft(x::AbstractArray{Complex{Float64}, 1})
+    n = size(x)[1]
+
+    if (n == 0) || (n % 2 != 0)
+        throw(ArgumentError)
+    end
+
+    nHalf = n >> 1
+    z = Array(Complex{Float64}, nHalf)
+    twiddleBasis = e^(2.0 * pi * im / n)
+    twiddle = twiddleBasis
+    p = x[1]
+    q = x[nHalf+1]
+    xEven = 0.5 * (p + q)
+    xOdd = 0.5 * (p - q)
+    z[1] = xEven + 1im * xOdd
+
+    for i = 1:nHalf-1
+        p = x[i+1]
+        q = x[nHalf+i+1]
+        xEven = 0.5 * (p + q)
+        xOdd = 0.5 * (p - q) * twiddle
+        z[i+1] = xEven + 1im * xOdd
+        twiddle = twiddle * twiddleBasis
+    end
+
+    z_ifft = myifft(z)
+    result = Array(Float64, n)
+    result[1:2:n-1] = real(z_ifft)
+    result[2:2:n] = imag(z_ifft)
+    result
+end
+
+function myrealfft(x::AbstractArray{Float64, 1})
+    n = size(x)[1]
+
+    if (n == 0) || (n % 2 != 0)
+        throw(ArgumentError)
+    end
+
+    nHalf = n >> 1
+    z = x[1:2:n-1] + 1im * x[2:2:n]
+    z_fft = myfft(z)
+    result = Array(Complex{Float64}, n)
+    twiddleBasis = e^(-2.0 * pi * im / n)
+    twiddle = -1im * twiddleBasis
+    p = z_fft[1]
+    q = conj(z_fft[1])
+    result[1] = 0.5 * (p + q - 1im * (p - q))
+    i = 1
+
+    while i < nHalf
+        j = nHalf - i
+        p = z_fft[i+1]
+        q = conj(z_fft[j+1])
+        result[i+1] = 0.5 * (p + q  + twiddle * (p - q))
+        result[n-i+1] = conj(result[i+1])
+        twiddle = twiddle * twiddleBasis
+        i = i + 1
+    end
+
+    p = z_fft[1]
+    q = conj(z_fft[1])
+    result[nHalf+1] = 0.5 * (p + q  + 1im * (p - q))
+    result
 end
 
 end # module
