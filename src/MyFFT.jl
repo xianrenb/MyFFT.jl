@@ -177,14 +177,17 @@ function myrealfft(x::AbstractArray{Float64, 1})
     q = conj(z_fft[1])
     result[1] = 0.5 * (p + q - 1im * (p - q))
     result[nHalf+1] = 0.5 * (p + q  + 1im * (p - q))
+    i = 1
+    j = nHalf - 1
 
-    for i = 1:nHalf-1
-        j = nHalf - i
+    while i < nHalf
         p = z_fft[i+1]
         q = conj(z_fft[j+1])
         result[i+1] = 0.5 * (p + q  + twiddle * (p - q))
         result[n-i+1] = conj(result[i+1])
         twiddle = twiddle * twiddleBasis
+        i = i + 1
+        j = j - 1
     end
 
     result
