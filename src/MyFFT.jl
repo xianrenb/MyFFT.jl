@@ -19,15 +19,13 @@ function _myBluestein(x::AbstractArray{Complex{Float64}, 1},
     twiddleBasis2 = twiddleBasis * twiddleBasis
     twiddle = twiddleBasis
     twiddle2 = twiddle
-    i = 2
 
-    while i <= m
+    for i = 2:m
         c[i] = twiddle2
         # t^1, t^3, t^5, t^7, t^9,...
         twiddle = twiddle * twiddleBasis2
         # t^1, t^4, t^9, t^16, t^25,...
         twiddle2 = twiddle2 * twiddle
-        i = i + 1
     end
 
     a[1:n] = x[1:n] .* c[1:n]
@@ -178,21 +176,17 @@ function myrealfft(x::AbstractArray{Float64, 1})
     p = z_fft[1]
     q = conj(z_fft[1])
     result[1] = 0.5 * (p + q - 1im * (p - q))
-    i = 1
+    result[nHalf+1] = 0.5 * (p + q  + 1im * (p - q))
 
-    while i < nHalf
+    for i = 1:nHalf-1
         j = nHalf - i
         p = z_fft[i+1]
         q = conj(z_fft[j+1])
         result[i+1] = 0.5 * (p + q  + twiddle * (p - q))
         result[n-i+1] = conj(result[i+1])
         twiddle = twiddle * twiddleBasis
-        i = i + 1
     end
 
-    p = z_fft[1]
-    q = conj(z_fft[1])
-    result[nHalf+1] = 0.5 * (p + q  + 1im * (p - q))
     result
 end
 
