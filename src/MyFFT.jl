@@ -52,9 +52,7 @@ function _myfftTask!(x::AbstractArray{Complex{Float64}, 1}, r::Range,
     result::AbstractArray{Complex{Float64}, 1}, rResult::Range, n::Integer, 
     twiddleBasis::Complex{Float64})
 
-    if n == 1
-        result[rResult.start] = x[r.start]
-    else
+    if n > 2
         nHalf = n >> 1
 
         # call sub-tasks
@@ -86,6 +84,13 @@ function _myfftTask!(x::AbstractArray{Complex{Float64}, 1}, r::Range,
             result[j] = xEven - xOdd
             twiddle = twiddle * twiddleBasis
         end
+    elseif n == 2
+        xEven = x[r.start]
+        xOdd = x[r.stop]
+        result[rResult.start] = xEven + xOdd
+        result[rResult.stop] = xEven - xOdd
+    else
+        result[rResult.start] = x[r.start]
     end
 
     nothing
