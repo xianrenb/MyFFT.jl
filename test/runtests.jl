@@ -14,8 +14,10 @@ for i in n
     println("N = $(i):")
     v = rand(i) + im * rand(i)
     println("myfft():")
+    gc()
     @time v_myfft = myfft(v)
     println("fft():")
+    gc()
     @time v_fft = fft(v)
 
     for j = 1:i
@@ -30,6 +32,7 @@ for i in n
     println("N = $(i):")
     v = rand(i) + im * rand(i)
     println("myifft(myfft()):")
+    gc()
     @time v2 = myifft(myfft(v))
 
     for j = 1:i
@@ -44,8 +47,10 @@ for i in n
     println("N = $(i):")
     v = rand(i)
     println("myrealfft():")
+    gc()
     @time v_realfft = myrealfft(v)
     println("fft():")
+    gc()
     @time v_fft = fft(v)
 
     for j = 1:i
@@ -58,6 +63,7 @@ for i in n
     println("N = $(i):")
     v = rand(i)
     println("myirealfft(myrealfft()):")
+    gc()
     @time v2 = myirealfft(myrealfft(v))
 
     for j = 1:i
