@@ -1,6 +1,7 @@
 using MyFFT
 using Base.Test
 
+FFTW.set_num_threads(1)
 fft([0.0im, 0.0im, 0.0im])
 myfft([0.0im, 0.0im, 0.0im])
 myifft([0.0im, 0.0im, 0.0im])
