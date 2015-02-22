@@ -19,6 +19,8 @@ for i in n
     println("fft():")
     gc()
     @time v_fft = fft(v)
+    gc()
+    @time v_fft = fft(v)
 
     for j = 1:i
         @test_approx_eq_eps(real(v_myfft[j]), real(v_fft[j]), 1e-12 * i * log2(i))
@@ -50,6 +52,8 @@ for i in n
     gc()
     @time v_realfft = myrealfft(v)
     println("fft():")
+    gc()
+    @time v_fft = fft(v)
     gc()
     @time v_fft = fft(v)
 
