@@ -2,9 +2,7 @@ module MyFFT
 
 export myfft, myifft, myirealfft, myrealfft
 
-function _myBluestein(x::AbstractArray{Complex{Float64}, 1}, 
-    twiddleBasis::Complex{Float64})
-
+function _myBluestein{C<:Complex}(x::AbstractArray{C, 1}, twiddleBasis::C)
     n = size(x)[1]
     m = nextpow2((n << 1) - 1)
     a = zeros(Complex{Float64}, m)
@@ -37,15 +35,13 @@ function _myBluestein(x::AbstractArray{Complex{Float64}, 1},
     copy((c .* _myconv(a, b))[1:n])
 end
 
-function _myconv(a::AbstractArray{Complex{Float64}, 1}, 
-    b::AbstractArray{Complex{Float64}, 1})
-
+function _myconv{C<:Complex}(a::AbstractArray{C, 1}, b::AbstractArray{C, 1})
     myifft(myfft(a) .* myfft(b))
 end
 
-function _myfftTask!(x::AbstractArray{Complex{Float64}, 1}, r::Range, 
-    result::AbstractArray{Complex{Float64}, 1}, rResult::Range, n::Integer, 
-    twiddleBasis::Complex{Float64})
+function _myfftTask!{C<:Complex, R<:Range, Rr<:Range, I<:Integer}(
+    x::AbstractArray{C, 1}, r::R, result::AbstractArray{C, 1}, 
+    rResult::Rr, n::I, twiddleBasis::C)
 
     if n > 2
         nHalf = n >> 1
@@ -91,7 +87,7 @@ function _myfftTask!(x::AbstractArray{Complex{Float64}, 1}, r::Range,
     nothing
 end
 
-function myfft(x::AbstractArray{Complex{Float64}, 1})
+function myfft{C<:Complex}(x::AbstractArray{C, 1})
     n = size(x)[1]
 
     if n == 0
@@ -109,7 +105,7 @@ function myfft(x::AbstractArray{Complex{Float64}, 1})
     result
 end
 
-function myifft(x::AbstractArray{Complex{Float64}, 1})
+function myifft{C<:Complex}(x::AbstractArray{C, 1})
     n = size(x)[1]
 
     if n == 0
@@ -127,7 +123,7 @@ function myifft(x::AbstractArray{Complex{Float64}, 1})
     result/n
 end
 
-function myirealfft(x::AbstractArray{Complex{Float64}, 1})
+function myirealfft{C<:Complex}(x::AbstractArray{C, 1})
     n = size(x)[1]
 
     if (n == 0) || (n % 2 != 0)
@@ -160,7 +156,7 @@ function myirealfft(x::AbstractArray{Complex{Float64}, 1})
     result
 end
 
-function myrealfft(x::AbstractArray{Float64, 1})
+function myrealfft{R<:Real}(x::AbstractArray{R, 1})
     n = size(x)[1]
 
     if (n == 0) || (n % 2 != 0)
