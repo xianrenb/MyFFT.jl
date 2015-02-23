@@ -159,7 +159,7 @@ function myirealfft{F<:Real}(x::AbstractArray{Complex{F}, 1})
     end
 
     z_ifft = myifft(z)
-    result = Array(Float64, n)
+    result = Array(F, n)
     result[1:2:n-1] = real(z_ifft)
     result[2:2:n] = imag(z_ifft)
     result
