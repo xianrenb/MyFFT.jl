@@ -2,14 +2,16 @@ module MyFFT
 
 export myfft, myifft, myirealfft, myrealfft
 
-_myBluesteinCache = Dict{(Type, Complex, Integer), Array}()
+_myBluesteinCache = Dict{(Type, Complex{Real}, Integer), Array}()
 
-function _myBluestein{C<:Complex}(x::AbstractArray{C, 1}, twiddleBasis::C)
+function _myBluestein{F<:Real}(x::AbstractArray{Complex{F}, 1}, 
+    twiddleBasis::Complex{F})
+
     n = size(x)[1]
     m = nextpow2((n << 1) - 1)
-    a = zeros(Complex{Float64}, m)
-    b = zeros(Complex{Float64}, m)
-    c = Array(Complex{Float64}, m)
+    a = zeros(Complex{F}, m)
+    b = zeros(Complex{F}, m)
+    c = Array(Complex{F}, m)
     c[1] = 1 + 0.0im
     twiddleBasis2 = twiddleBasis * twiddleBasis
     twiddle = twiddleBasis
@@ -25,8 +27,8 @@ function _myBluestein{C<:Complex}(x::AbstractArray{C, 1}, twiddleBasis::C)
 
     a[1:n] = x[1:n] .* c[1:n]
 
-    if haskey(_myBluesteinCache, (C, twiddleBasis, n))
-        b_fft = _myBluesteinCache[(C, twiddleBasis, n)]
+    if haskey(_myBluesteinCache, (Complex{F}, twiddleBasis, n))
+        b_fft = _myBluesteinCache[(Complex{F}, twiddleBasis, n)]
     else
         b[1:n] = conj(c[1:n])
         i = 2
@@ -39,15 +41,16 @@ function _myBluestein{C<:Complex}(x::AbstractArray{C, 1}, twiddleBasis::C)
         end
 
         b_fft = myfft(b)
-        _myBluesteinCache[(C, twiddleBasis, n)] = b_fft
+        _myBluesteinCache[(Complex{F}, twiddleBasis, n)] = b_fft
     end
 
     copy((c .* myifft(myfft(a) .* b_fft))[1:n])
 end
 
-function _myfftTask!{C<:Complex, R<:Range, Rr<:Range, I<:Integer}(
-    x::AbstractArray{C, 1}, r::R, result::AbstractArray{C, 1}, 
-    rResult::Rr, n::I, twiddleBasis::C)
+function _myfftTask!{F<:Real, R<:Range, Rr<:Range, I<:Integer}(
+    x::AbstractArray{Complex{F}, 1}, r::R, 
+    result::AbstractArray{Complex{F}, 1}, rResult::Rr, n::I, 
+    twiddleBasis::Complex{F})
 
     if n > 2
         nHalf = n >> 1
@@ -93,7 +96,7 @@ function _myfftTask!{C<:Complex, R<:Range, Rr<:Range, I<:Integer}(
     nothing
 end
 
-function myfft{C<:Complex}(x::AbstractArray{C, 1})
+function myfft{F<:Real}(x::AbstractArray{Complex{F}, 1})
     n = size(x)[1]
 
     if n == 0
@@ -101,7 +104,7 @@ function myfft{C<:Complex}(x::AbstractArray{C, 1})
     elseif n & (n-1) == 0
         r = 1:n
         twiddleBasis = cis(-2.0 * pi / n)
-        result = Array(Complex{Float64}, n)
+        result = Array(Complex{F}, n)
         _myfftTask!(x, r, result, r, n, twiddleBasis)
     else
         twiddleBasis = cis(-1.0 * pi / n)
@@ -111,7 +114,7 @@ function myfft{C<:Complex}(x::AbstractArray{C, 1})
     result
 end
 
-function myifft{C<:Complex}(x::AbstractArray{C, 1})
+function myifft{F<:Real}(x::AbstractArray{Complex{F}, 1})
     n = size(x)[1]
 
     if n == 0
@@ -119,7 +122,7 @@ function myifft{C<:Complex}(x::AbstractArray{C, 1})
     elseif n & (n-1) == 0
         r = 1:n
         twiddleBasis = cis(2.0 * pi / n)
-        result = Array(Complex{Float64}, n)
+        result = Array(Complex{F}, n)
         _myfftTask!(x, r, result, r, n, twiddleBasis)
     else
         twiddleBasis = cis(1.0 * pi / n)
@@ -129,7 +132,7 @@ function myifft{C<:Complex}(x::AbstractArray{C, 1})
     result/n
 end
 
-function myirealfft{C<:Complex}(x::AbstractArray{C, 1})
+function myirealfft{F<:Real}(x::AbstractArray{Complex{F}, 1})
     n = size(x)[1]
 
     if (n == 0) || (n % 2 != 0)
@@ -137,7 +140,7 @@ function myirealfft{C<:Complex}(x::AbstractArray{C, 1})
     end
 
     nHalf = n >> 1
-    z = Array(Complex{Float64}, nHalf)
+    z = Array(Complex{F}, nHalf)
     twiddleBasis = cis(2.0 * pi / n)
     twiddle = twiddleBasis
     p = x[1]
@@ -162,7 +165,7 @@ function myirealfft{C<:Complex}(x::AbstractArray{C, 1})
     result
 end
 
-function myrealfft{R<:Real}(x::AbstractArray{R, 1})
+function myrealfft{F<:Real}(x::AbstractArray{F, 1})
     n = size(x)[1]
 
     if (n == 0) || (n % 2 != 0)
@@ -172,7 +175,7 @@ function myrealfft{R<:Real}(x::AbstractArray{R, 1})
     nHalf = n >> 1
     z = x[1:2:n-1] + 1im * x[2:2:n]
     z_fft = myfft(z)
-    result = Array(Complex{Float64}, n)
+    result = Array(Complex{F}, n)
     twiddleBasis = cis(-2.0 * pi / n)
     twiddle = -1im * twiddleBasis
     p = z_fft[1]
