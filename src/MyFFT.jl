@@ -135,8 +135,10 @@ end
 function myirealfft{F<:Real}(x::AbstractArray{Complex{F}, 1})
     n = size(x)[1]
 
-    if (n == 0) || (n % 2 != 0)
+    if n == 0
         throw(ArgumentError)
+    elseif n % 2 != 0
+        return real(ifft(x))
     end
 
     nHalf = n >> 1
@@ -168,8 +170,10 @@ end
 function myrealfft{F<:Real}(x::AbstractArray{F, 1})
     n = size(x)[1]
 
-    if (n == 0) || (n % 2 != 0)
+    if n == 0
         throw(ArgumentError)
+    elseif n % 2 != 0
+        return fft(x + 0.0im)
     end
 
     nHalf = n >> 1
