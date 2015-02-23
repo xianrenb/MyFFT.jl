@@ -2,6 +2,8 @@ module MyFFT
 
 export myfft, myifft, myirealfft, myrealfft
 
+_myBluesteinCache = Dict{(Type, Complex, Integer), Array}()
+
 function _myBluestein{C<:Complex}(x::AbstractArray{C, 1}, twiddleBasis::C)
     n = size(x)[1]
     m = nextpow2((n << 1) - 1)
@@ -22,21 +24,25 @@ function _myBluestein{C<:Complex}(x::AbstractArray{C, 1}, twiddleBasis::C)
     end
 
     a[1:n] = x[1:n] .* c[1:n]
-    b[1:n] = conj(c[1:n])
-    i = 2
-    j = m
 
-    while i <= n
-        b[j] = b[i]
-        i = i + 1
-        j = j - 1
+    if haskey(_myBluesteinCache, (C, twiddleBasis, n))
+        b_fft = _myBluesteinCache[(C, twiddleBasis, n)]
+    else
+        b[1:n] = conj(c[1:n])
+        i = 2
+        j = m
+
+        while i <= n
+            b[j] = b[i]
+            i = i + 1
+            j = j - 1
+        end
+
+        b_fft = myfft(b)
+        _myBluesteinCache[(C, twiddleBasis, n)] = b_fft
     end
 
-    copy((c .* _myconv(a, b))[1:n])
-end
-
-function _myconv{C<:Complex}(a::AbstractArray{C, 1}, b::AbstractArray{C, 1})
-    myifft(myfft(a) .* myfft(b))
+    copy((c .* myifft(myfft(a) .* b_fft))[1:n])
 end
 
 function _myfftTask!{C<:Complex, R<:Range, Rr<:Range, I<:Integer}(

@@ -40,8 +40,8 @@ for i in n
     @time v2 = myifft(myfft(v))
 
     for j = 1:i
-        @test_approx_eq_eps(real(v), real(v2), 1e-12 * i * log2(i) ^ 2)
-        @test_approx_eq_eps(imag(v), imag(v2), 1e-12 * i * log2(i) ^ 2)
+        @test_approx_eq_eps(real(v[j]), real(v2[j]), 1e-12 * i * log2(i) ^ 2)
+        @test_approx_eq_eps(imag(v[j]), imag(v2[j]), 1e-12 * i * log2(i) ^ 2)
     end
 end
 
@@ -62,8 +62,8 @@ for i in n
     @time v_fft = fft(v)
 
     for j = 1:i
-        @test_approx_eq_eps(real(v_realfft), real(v_fft), 1e-12 * i * log2(i))
-        @test_approx_eq_eps(imag(v_realfft), imag(v_fft), 1e-12 * i * log2(i))
+        @test_approx_eq_eps(real(v_realfft[j]), real(v_fft[j]), 1e-12 * i * log2(i))
+        @test_approx_eq_eps(imag(v_realfft[j]), imag(v_fft[j]), 1e-12 * i * log2(i))
     end
 end
 
@@ -75,7 +75,6 @@ for i in n
     @time v2 = myirealfft(myrealfft(v))
 
     for j = 1:i
-        @test_approx_eq_eps(real(v), real(v2), 1e-12 * i * log2(i) ^ 2)
-        @test_approx_eq_eps(imag(v), imag(v2), 1e-12 * i * log2(i) ^ 2)
+        @test_approx_eq_eps(v[j], v2[j], 1e-12 * i * log2(i) ^ 2)
     end
 end
