@@ -14,6 +14,7 @@ for i in n
     println("N = $(i):")
     v = rand(i) + im * rand(i)
     println("myfft():")
+    myfftClearCache()
     gc()
     @time v_myfft = myfft(v)
     gc()
@@ -36,6 +37,7 @@ for i in n
     println("N = $(i):")
     v = rand(i) + im * rand(i)
     println("myifft(myfft()):")
+    myfftClearCache()
     gc()
     @time v2 = myifft(myfft(v))
 
@@ -51,6 +53,7 @@ for i in n
     println("N = $(i):")
     v = rand(i)
     println("myrealfft():")
+    myfftClearCache()
     gc()
     @time v_realfft = myrealfft(v)
     gc()
@@ -71,6 +74,7 @@ for i in n
     println("N = $(i):")
     v = rand(i)
     println("myirealfft(myrealfft()):")
+    myfftClearCache()
     gc()
     @time v2 = myirealfft(myrealfft(v))
 
@@ -78,3 +82,10 @@ for i in n
         @test_approx_eq_eps(v[j], v2[j], 1e-12 * i * log2(i) ^ 2)
     end
 end
+
+println("BigFloat:")
+x = im * convert(BigFloat, 0)
+gc()
+@time myfft([x, x, x])
+gc()
+@time myfft([x, x, x])

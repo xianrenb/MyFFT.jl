@@ -1,8 +1,8 @@
 module MyFFT
 
-export myfft, myifft, myirealfft, myrealfft
+export myfft, myfftClearCache, myifft, myirealfft, myrealfft
 
-_myBluesteinCache = Dict{(Type, Complex{Real}, Integer), Array}()
+_myBluesteinCache = Dict{(Type, Complex{Real}, Integer), AbstractArray}()
 
 function _myBluestein{F<:Real}(x::AbstractArray{Complex{F}, 1}, 
     twiddleBasis::Complex{F})
@@ -103,15 +103,19 @@ function myfft{F<:Real}(x::AbstractArray{Complex{F}, 1})
         throw(ArgumentError)
     elseif n & (n-1) == 0
         r = 1:n
-        twiddleBasis = cis(-2.0 * pi / n)
+        twiddleBasis = cis(convert(F, -2) * pi / n)
         result = Array(Complex{F}, n)
         _myfftTask!(x, r, result, r, n, twiddleBasis)
     else
-        twiddleBasis = cis(-1.0 * pi / n)
+        twiddleBasis = cis(convert(F, -1) * pi / n)
         result = _myBluestein(x, twiddleBasis)
     end
 
     result
+end
+
+function myfftClearCache()
+    _myBluesteinCache = Dict{(Type, Complex{Real}, Integer), AbstractArray}()
 end
 
 function myifft{F<:Real}(x::AbstractArray{Complex{F}, 1})
@@ -121,11 +125,11 @@ function myifft{F<:Real}(x::AbstractArray{Complex{F}, 1})
         throw(ArgumentError)
     elseif n & (n-1) == 0
         r = 1:n
-        twiddleBasis = cis(2.0 * pi / n)
+        twiddleBasis = cis(convert(F, 2) * pi / n)
         result = Array(Complex{F}, n)
         _myfftTask!(x, r, result, r, n, twiddleBasis)
     else
-        twiddleBasis = cis(1.0 * pi / n)
+        twiddleBasis = cis(convert(F, 1) * pi / n)
         result = _myBluestein(x, twiddleBasis)
     end
 
@@ -143,7 +147,7 @@ function myirealfft{F<:Real}(x::AbstractArray{Complex{F}, 1})
 
     nHalf = n >> 1
     z = Array(Complex{F}, nHalf)
-    twiddleBasis = cis(2.0 * pi / n)
+    twiddleBasis = cis(convert(F, 2) * pi / n)
     twiddle = twiddleBasis
     p = x[1]
     q = x[nHalf+1]
@@ -180,7 +184,7 @@ function myrealfft{F<:Real}(x::AbstractArray{F, 1})
     z = x[1:2:n-1] + 1im * x[2:2:n]
     z_fft = myfft(z)
     result = Array(Complex{F}, n)
-    twiddleBasis = cis(-2.0 * pi / n)
+    twiddleBasis = cis(convert(F, -2) * pi / n)
     twiddle = -1im * twiddleBasis
     p = z_fft[1]
     q = conj(z_fft[1])
