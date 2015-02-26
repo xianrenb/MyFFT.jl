@@ -2,33 +2,24 @@ module MyFFT
 
 export myfft, myfftClearCache, myifft, myirealfft, myrealfft
 
-_myBluesteinCache = Dict{(Type, Complex{Real}, Integer), AbstractArray}()
+_myBluesteinCache = Dict{(Type, Integer), AbstractArray}()
 
-function _myBluestein{F<:Real}(x::AbstractArray{Complex{F}, 1}, 
-    twiddleBasis::Complex{F})
-
+function _myBluestein{F<:Real}(x::AbstractArray{Complex{F}, 1}, d::Integer)
     n = size(x)[1]
     m = nextpow2((n << 1) - 1)
     a = zeros(Complex{F}, m)
     b = zeros(Complex{F}, m)
     c = Array(Complex{F}, m)
     c[1] = 1 + 0.0im
-    twiddleBasis2 = twiddleBasis * twiddleBasis
-    twiddle = twiddleBasis
-    twiddle2 = twiddle
 
-    for i = 2:m
-        c[i] = twiddle2
-        # t^1, t^3, t^5, t^7, t^9,...
-        twiddle = twiddle * twiddleBasis2
-        # t^1, t^4, t^9, t^16, t^25,...
-        twiddle2 = twiddle2 * twiddle
+    for i = 1:m-1
+        c[i+1] = cis(convert(F, 1) * i * i * pi / d)
     end
 
     a[1:n] = x[1:n] .* c[1:n]
 
-    if haskey(_myBluesteinCache, (Complex{F}, twiddleBasis, n))
-        b_fft = _myBluesteinCache[(Complex{F}, twiddleBasis, n)]
+    if haskey(_myBluesteinCache, (Complex{F}, d))
+        b_fft = _myBluesteinCache[(Complex{F}, d)]
     else
         b[1:n] = conj(c[1:n])
         i = 2
@@ -41,7 +32,7 @@ function _myBluestein{F<:Real}(x::AbstractArray{Complex{F}, 1},
         end
 
         b_fft = myfft(b)
-        _myBluesteinCache[(Complex{F}, twiddleBasis, n)] = b_fft
+        _myBluesteinCache[(Complex{F}, d)] = b_fft
     end
 
     copy((c .* myifft(myfft(a) .* b_fft))[1:n])
@@ -107,15 +98,14 @@ function myfft{F<:Real}(x::AbstractArray{Complex{F}, 1})
         result = Array(Complex{F}, n)
         _myfftTask!(x, r, result, r, n, twiddleBasis)
     else
-        twiddleBasis = cis(convert(F, -1) * pi / n)
-        result = _myBluestein(x, twiddleBasis)
+        result = _myBluestein(x, -n)
     end
 
     result
 end
 
 function myfftClearCache()
-    _myBluesteinCache = Dict{(Type, Complex{Real}, Integer), AbstractArray}()
+    _myBluesteinCache = Dict{(Type, Integer), AbstractArray}()
 end
 
 function myifft{F<:Real}(x::AbstractArray{Complex{F}, 1})
@@ -129,8 +119,7 @@ function myifft{F<:Real}(x::AbstractArray{Complex{F}, 1})
         result = Array(Complex{F}, n)
         _myfftTask!(x, r, result, r, n, twiddleBasis)
     else
-        twiddleBasis = cis(convert(F, 1) * pi / n)
-        result = _myBluestein(x, twiddleBasis)
+        result = _myBluestein(x, n)
     end
 
     result/n

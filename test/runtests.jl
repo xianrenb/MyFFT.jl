@@ -27,7 +27,7 @@ for i in n
 
     for j = 1:i
         eps_fft = 2^0.5 * eps() * 2.0 * ceil(log2(2*i-1))^2.0
-        eps_myfft = 2^0.5 * eps() * 2.0 * i^2.0 * ceil(log2(2*i-1))^2.0
+        eps_myfft = 2^0.5 * eps() * 2.0 * nextpow2(2*i-1)^2.0 * ceil(log2(2*i-1))^2.0
         eps_total = eps_fft + eps_myfft
         @test_approx_eq_eps(real(v_myfft[j]), real(v_fft[j]), eps_total)
         @test_approx_eq_eps(imag(v_myfft[j]), imag(v_fft[j]), eps_total)
@@ -46,7 +46,7 @@ for i in n
 
     for j = 1:i
         eps_fft = 2^0.5 * eps() * 4.0 * ceil(log2(2*i-1))^4.0
-        eps_myfft = 2^0.5 * eps() * 4.0 * i^4.0 * ceil(log2(2*i-1))^4.0
+        eps_myfft = 2^0.5 * eps() * 4.0 * nextpow2(2*i-1)^4.0 * ceil(log2(2*i-1))^4.0
         eps_total = eps_fft + eps_myfft
         @test_approx_eq_eps(real(v[j]), real(v2[j]), eps_total)
         @test_approx_eq_eps(imag(v[j]), imag(v2[j]), eps_total)
@@ -72,7 +72,7 @@ for i in n
 
     for j = 1:i
         eps_fft = 1.0 * eps() * 2.0 * ceil(log2(2*i-1))^2.0
-        eps_myfft = 1.0 * eps() * 2.0 * i^2.0 * ceil(log2(2*i-1))^2.0
+        eps_myfft = 1.0 * eps() * 2.0 * nextpow2(2*i-1)^2.0 * ceil(log2(2*i-1))^2.0
         eps_total = eps_fft + eps_myfft
         @test_approx_eq_eps(real(v_realfft[j]), real(v_fft[j]), eps_total)
         @test_approx_eq_eps(imag(v_realfft[j]), imag(v_fft[j]), eps_total)
@@ -89,7 +89,7 @@ for i in n
 
     for j = 1:i
         eps_fft = 1.0 * eps() * 4.0 * ceil(log2(2*i-1))^4.0
-        eps_myfft = 1.0 * eps() * 4.0 * i^4.0 * ceil(log2(2*i-1))^4.0
+        eps_myfft = 1.0 * eps() * 4.0 * nextpow2(2*i-1)^4.0 * ceil(log2(2*i-1))^4.0
         eps_total = eps_fft + eps_myfft
         @test_approx_eq_eps(v[j], v2[j], eps_total)
     end
